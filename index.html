@@ -50,6 +50,7 @@
           <button type="button" id="plusBtn" class="rounded-full px-4 py-2 font-bold bg-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition aria-selected bg-blue-500" aria-label="加算モード" aria-pressed="true">＋</button>
           <button type="button" id="minusBtn" class="rounded-full px-4 py-2 font-bold bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition aria-selected bg-gray-200" aria-label="減算モード" aria-pressed="false">−</button>
           <button type="submit" id="equalBtn" class="rounded-full px-6 py-2 font-bold bg-green-500 text-white focus:outline-none focus:ring-2 focus:ring-green-400 ml-2 transition" aria-label="計算実行">＝</button>
+          <button type="button" id="clearBtn" class="rounded-full px-4 py-2 font-bold bg-gray-300 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 ml-2 transition" aria-label="クリア">クリア</button>
         </div>
         <!-- 2組目 -->
         <div class="flex items-center justify-center gap-2 w-full">
@@ -80,6 +81,7 @@
     const minusBtn = document.getElementById('minusBtn');
     const equalBtn = document.getElementById('equalBtn');
     const form = document.getElementById('timeForm');
+    const clearBtn = document.getElementById('clearBtn');
 
     let operation = 'add'; // 'add' or 'sub'
 
@@ -188,6 +190,16 @@
         }
       });
       inp.addEventListener('input', clearMessages);
+    });
+
+    // クリアボタン処理
+    clearBtn.addEventListener('click', () => {
+      hour1.value = '';
+      minute1.value = '';
+      hour2.value = '';
+      minute2.value = '';
+      clearMessages();
+      hour1.focus();
     });
 
     // 初期化
