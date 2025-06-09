@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>簡易時間計算</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media (max-width: 600px) {
+      .custom-card {
+        width: 90% !important;
+        min-width: unset !important;
+        padding: 1.2rem !important;
+      }
+      .custom-title {
+        font-size: 1rem !important;
+      }
+    }
+    .unit-label {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 0.75rem;
+      color: #666;
+      pointer-events: none;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col justify-center items-center">
+  <div class="custom-card bg-white shadow-md rounded-2xl p-8 w-[400px] max-w-full flex flex-col items-center">
+    <h2 class="custom-title text-2xl font-bold text-center mb-6">簡易時間計算</h2>
+    <form id="timeForm" class="w-full flex flex-col items-center">
+      <div class="flex flex-col gap-3 w-full">
+        <!-- 1組目 -->
+        <div class="flex items-center justify-center gap-2 w-full">
+          <div class="relative">
+            <input id="hour1" type="number" min="0" step="1" tabindex="1" class="w-32 px-4 py-2 pr-10 border border-gray-300 rounded-md text-2xl text-center focus:ring-2 focus:ring-blue-400" autocomplete="off" aria-label="1組目の時" />
+            <span class="unit-label">h</span>
+          </div>
+          <span class="mx-1 text-lg text-gray-500 select-none">-</span>
+          <div class="relative">
+            <input id="minute1" type="number" min="0" max="59" step="1" tabindex="2" class="w-24 px-3 py-2 pr-8 border border-gray-300 rounded-md text-2xl text-center focus:ring-2 focus:ring-blue-400" autocomplete="off" aria-label="1組目の分" />
+            <span class="unit-label">m</span>
+          </div>
+        </div>
+        <!-- 操作部 -->
+        <div class="flex items-center justify-center gap-2 w-full mt-2 mb-2">
+          <button type="button" id="plusBtn" class="rounded-full px-4 py-2 font-bold bg-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition aria-selected bg-blue-500" aria-label="加算モード" aria-pressed="true">＋</button>
+          <button type="button" id="minusBtn" class="rounded-full px-4 py-2 font-bold bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition aria-selected bg-gray-200" aria-label="減算モード" aria-pressed="false">−</button>
+          <button type="submit" id="equalBtn" class="rounded-full px-6 py-2 font-bold bg-green-500 text-white focus:outline-none focus:ring-2 focus:ring-green-400 ml-2 transition" aria-label="計算実行">＝</button>
+        </div>
+        <!-- 2組目 -->
+        <div class="flex items-center justify-center gap-2 w-full">
+          <div class="relative">
+            <input id="hour2" type="number" min="0" step="1" tabindex="3" class="w-32 px-4 py-2 pr-10 border border-gray-300 rounded-md text-2xl text-center focus:ring-2 focus:ring-blue-400" autocomplete="off" aria-label="2組目の時" />
+            <span class="unit-label">h</span>
+          </div>
+          <span class="mx-1 text-lg text-gray-500 select-none">-</span>
+          <div class="relative">
+            <input id="minute2" type="number" min="0" max="59" step="1" tabindex="4" class="w-24 px-3 py-2 pr-8 border border-gray-300 rounded-md text-2xl text-center focus:ring-2 focus:ring-blue-400" autocomplete="off" aria-label="2組目の分" />
+            <span class="unit-label">m</span>
+          </div>
+        </div>
+      </div>
+      <div id="error" class="w-full text-center text-red-600 text-base mt-4 min-h-[1.6em]"></div>
+      <div id="result" class="w-full text-center text-2xl font-bold mt-6 min-h-[2.5em]"></div>
+    </form>
+  </div>
+  <script>
+    // DOM取得
+    const hour1 = document.getElementById('hour1');
+    const minute1 = document.getElementById('minute1');
+    const hour2 = document.getElementById('hour2');
+    const minute2 = document.getElementById('minute2');
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+    const plusBtn = document.getElementById('plusBtn');
+    const minusBtn = document.getElementById('minusBtn');
+    const equalBtn = document.getElementById('equalBtn');
+    const form = document.getElementById('timeForm');
+
+    let operation = 'add'; // 'add' or 'sub'
+
+    function updateOperatorButtons() {
+      if (operation === 'add') {
+        plusBtn.classList.add('bg-blue-500','text-white');
+        plusBtn.classList.remove('bg-gray-200','text-gray-700');
+        plusBtn.setAttribute('aria-pressed', 'true');
+        minusBtn.classList.add('bg-gray-200','text-gray-700');
+        minusBtn.classList.remove('bg-blue-500','text-white');
+        minusBtn.setAttribute('aria-pressed', 'false');
+      } else {
+        minusBtn.classList.add('bg-blue-500','text-white');
+        minusBtn.classList.remove('bg-gray-200','text-gray-700');
+        minusBtn.setAttribute('aria-pressed', 'true');
+        plusBtn.classList.add('bg-gray-200','text-gray-700');
+        plusBtn.classList.remove('bg-blue-500','text-white');
+        plusBtn.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    function clearMessages() {
+      resultDiv.textContent = '';
+      errorDiv.textContent = '';
+    }
+
+    function calcTime() {
+      clearMessages();
+      const h1 = hour1.value.trim();
+      const m1 = minute1.value.trim();
+      const h2 = hour2.value.trim();
+      const m2 = minute2.value.trim();
+      if (h1 === '' || m1 === '' || h2 === '' || m2 === '') {
+        errorDiv.textContent = '入力エラー';
+        return;
+      }
+      let n1 = parseInt(h1, 10);
+      let n2 = parseInt(m1, 10);
+      let n3 = parseInt(h2, 10);
+      let n4 = parseInt(m2, 10);
+      if ([n1, n2, n3, n4].some(v => isNaN(v) || v < 0 || (v > 59 && (v === n2 || v === n4)))) {
+        errorDiv.textContent = '入力エラー';
+        return;
+      }
+      let hourRes, minRes, negative = false;
+      if (operation === 'add') {
+        hourRes = n1 + n3;
+        minRes = n2 + n4;
+      } else {
+        hourRes = n1 - n3;
+        minRes = n2 - n4;
+      }
+      // 60分繰り上げ
+      if (minRes >= 60) {
+        hourRes += Math.floor(minRes / 60);
+        minRes = minRes % 60;
+      } else if (minRes < 0) {
+        hourRes -= 1;
+        minRes += 60;
+      }
+      // マイナス判定
+      if (hourRes < 0 || (hourRes === 0 && minRes < 0)) {
+        negative = true;
+        hourRes = Math.abs(hourRes);
+        minRes = Math.abs(minRes);
+      }
+      // 結果表示
+      let hourStr = `<span class=\"relative inline-block\">${hourRes}<span class=\"unit-label\" style=\"right:-1.3em;top:-0.8em;\">h</span></span>`;
+      let minStr = `<span class=\"relative inline-block\">${minRes.toString().padStart(2, '0')}<span class=\"unit-label\" style=\"right:-1.3em;top:-0.8em;\">m</span></span>`;
+      let resStr = hourStr + '<span class="mx-1">-</span>' + minStr;
+      if (negative) resStr = '<span class="text-red-600">-</span>' + resStr;
+      resultDiv.innerHTML = resStr;
+    }
+
+    // ボタン操作
+    plusBtn.addEventListener('click', () => {
+      operation = 'add';
+      updateOperatorButtons();
+      clearMessages();
+    });
+    minusBtn.addEventListener('click', () => {
+      operation = 'sub';
+      updateOperatorButtons();
+      clearMessages();
+    });
+
+    // フォーム送信（=ボタン or Enter）
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      calcTime();
+    });
+
+    // キーボードで + - を押した時のトグル
+    [hour1, minute1, hour2, minute2].forEach(inp => {
+      inp.addEventListener('keydown', e => {
+        if (e.key === '+') {
+          operation = 'add';
+          updateOperatorButtons();
+          clearMessages();
+          e.preventDefault();
+        } else if (e.key === '-') {
+          operation = 'sub';
+          updateOperatorButtons();
+          clearMessages();
+          e.preventDefault();
+        }
+      });
+      inp.addEventListener('input', clearMessages);
+    });
+
+    // 初期化
+    updateOperatorButtons();
+  </script>
+</body>
+</html>
